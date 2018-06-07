@@ -8,8 +8,8 @@ Backup your local Node-WebDollar Blockchain using Dropbox API
 #### Paste: ```0 */12 * * * bash blockcharch.sh```
 #### ^ CRON at every 12 hours ^
 ----
-#### To get a Dropbox Account, visit <a href="https://www.dropbox.com/" _target="blank">Create Dropbox Account</a>
-#### To create a Dropbox App, visit <a href="https://www.dropbox.com/developers" _target="blank">Create a Dropbox App</a>
+#### To get a Dropbox Account, visit <a href="https://www.dropbox.com/" target="_blank">Create Dropbox Account</a>
+#### To create a Dropbox App, visit <a href="https://www.dropbox.com/developers" target="_blank">Create a Dropbox App</a>
 ----
 <img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img1.jpg" alt="WebDollar Blockchain Backup image 1"/>
 <img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img2.jpg" alt="WebDollar Blockchain Backup image 2"/>
