@@ -95,7 +95,7 @@ function blockchainarchivator(){
 			echo "$showok Blockchain Folder $getflockchanfolder found!"
 			echo "$showinfo Blockchain Folder has size = $(du -h $getblockchainfolder)"
 			echo "$showexecute Proceeding with Blockchain Archivation..."
-			cd $getblockchainfolder && tar -czvf "$webdnode/$cutport.tar.gz" *
+			cd $getblockchainfolder && tar -czvf "$webdnode/$cutport.tar.gz" --exclude='LOCK' *
 
 			if [[ -s "$webdnode/$cutport.tar.gz" ]]; then
 
