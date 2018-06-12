@@ -3,7 +3,7 @@
 # You need a Dropbox account and an API key
 # This script should be used with CRON
 # sudo crontab -e
-# Paste: 0 */12 * * * bash blkcharch.sh
+# Paste: 0 */12 * * * bash blkcharch.sh > /home/enter_your_user/blockcharchiver.log
 # ^ CRON at every 12 hours ^
 
 #### COLOR SETTINGS ####
@@ -40,8 +40,12 @@ redhashtag="$REDbg$WHITE#$STAND"
 abortfm="$CYAN[abort for Menu]$STAND"
 ###
 
-### VARS
+### CHANGE_THESE_VALUES_TO_YOURS
 linuxuser="webd1" # change this to your Linux UserName | do not change order!
+mainwebdfolder="Node-WebDollar1" # this location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
+###
+
+### GENERAL_VARS
 fastsearch="/home/$linuxuser/.blockchaindbs"
 db3chunksfolder="/home/$linuxuser/db3chunks"
 response_code_100="^HTTP/1.1 100 CONTINUE"
@@ -81,8 +85,8 @@ function checksingleresponse()
 function blockchainarchivator(){
 	### VARS
 	webdnode=$(cat $fastsearch)
-	getblockchainfolder="$webdnode/blockchainDB380"
-	cutport=$(ls -d $getblockchainfolder | cut -d '/' -f5 | cut -d '8' -f1)
+	getblockchainfolder="$webdnode/blockchainDB3"
+	#cutport=$(ls -d $getblockchainfolder | cut -d '/' -f5 | cut -d '8' -f1)
 	###
 
 	if [[ -s $fastsearch ]]; then
@@ -95,11 +99,11 @@ function blockchainarchivator(){
 			echo "$showok Blockchain Folder $getflockchanfolder found!"
 			echo "$showinfo Blockchain Folder has size = $(du -h $getblockchainfolder)"
 			echo "$showexecute Proceeding with Blockchain Archivation..."
-			cd $getblockchainfolder && tar -czvf "$webdnode/$cutport.tar.gz" --exclude='LOCK' *
+			cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" --exclude='LOCK' *
 
-			if [[ -s "$webdnode/$cutport.tar.gz" ]]; then
+			if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
 
-				echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/$cutport.tar.gz)"
+				echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/blockchainDB3.tar.gz)"
 			else
 				echo "$showerror Blockchain Folder was not archived! Unexpected error! Investigate!"
 			fi
@@ -118,7 +122,7 @@ if [[ ! -s $fastsearch ]]; then
 
 	echo "$showerror Fast Search (cache): No Fast Search file found!!"
 	echo "$showexecute Creating one now..."
-	touch $fastsearch && echo "$(find / -type d -name "Node-WebDollar")" > $fastsearch
+	touch $fastsearch && echo "$(find / -name $mainwebdfolder)" > $fastsearch
 	echo "$showinfo Contents of Fast Search = $(cat $fastsearch)"
 	blockchainarchivator
 else
@@ -136,7 +140,7 @@ function dropboxbkupupload(){
 dropbox_config_file="/.dropbox_uploader"
 TMP_DIR="/tmp"
 DEBUG="1" # change this to 1 if debugging is needed
-LOCAL_FILE_SRC="/home/$linuxuser/Node-WebDollar/blockchainDB3.tar.gz"
+LOCAL_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.tar.gz"
 DROPBOX_DST="/blockchainDB3.tar.gz" # must start with /
 ###
 
@@ -355,4 +359,3 @@ upload_file
 ### DROPBOX UPLOADER FUNCTION
 
 dropboxbkupupload
-
