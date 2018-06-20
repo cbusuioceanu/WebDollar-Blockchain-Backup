@@ -2,6 +2,8 @@
 
 # You need a Dropbox account and an API key
 # This script should be used with CRON
+# Before first time run, make sure you input your values for linuxuser= and mainwebdfolder!
+# If you have to reset the main webdollar dropbox folder, just remove the .blockchaindbs file located @ /home/$linuxuser/.blockchaindbs
 # sudo crontab -e
 # Paste: 0 */12 * * * bash blkcharch.sh > /home/enter_your_user/blockcharchiver.log
 # ^ CRON at every 12 hours ^
@@ -42,7 +44,9 @@ abortfm="$CYAN[abort for Menu]$STAND"
 
 ### CHANGE_THESE_VALUES_TO_YOURS
 linuxuser="webd1" # change this to your Linux UserName | do not change order!
-mainwebdfolder="Node-WebDollar1" # this location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
+mainwebdfolder="Node-WebDollardropbox" # This location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
+pm2dropboxport="888"		       #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
+getpm2dropboxid=$(pm2 list | grep $pm2dropboxport | awk '{print $4}')  #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
 ###
 
 ### GENERAL_VARS
@@ -86,6 +90,8 @@ function blockchainarchivator(){
 	### VARS
 	webdnode=$(cat $fastsearch)
 	getblockchainfolder="$webdnode/blockchainDB3"
+	getpm2dropboxport=$(pm2 list | grep $pm2dropboxport | awk '{print $2}')
+	getpm2dropboxstatus=$(pm2 list | grep $pm2dropboxport | awk '{print $10}')
 	#cutport=$(ls -d $getblockchainfolder | cut -d '/' -f5 | cut -d '8' -f1)
 	###
 
@@ -95,17 +101,40 @@ function blockchainarchivator(){
 		echo "$showexecute Changing directory to: $webdnode" && cd $webdnode && echo "$showinfo Directory changed to $(pwd)"
 
 		if [[ -d $getblockchainfolder ]]; then
-
-			echo "$showok Blockchain Folder $getflockchanfolder found!"
+			echo "$showok Blockchain Folder $getblockchainfolder found!"
 			echo "$showinfo Blockchain Folder has size = $(du -h $getblockchainfolder)"
-			echo "$showexecute Proceeding with Blockchain Archivation..."
-			cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" --exclude='LOCK' *
+			echo "$showinfo We must STOP pm2 process in order to start Blockchain Archivation and Backup!"
+			echo "$showexecute Stopping PM2 process for ID=$getpm2dropboxid and PORT=$pm2dropboxport"
 
-			if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
+			if [[ -n $getpm2dropboxport ]]; then
+				pm2 stop $pm2dropboxport
+				sleep 1
+				echo "$showexecute Proceeding with Blockchain Archivation..."
+				cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" *
 
-				echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/blockchainDB3.tar.gz)"
+				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
+					echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/blockchainDB3.tar.gz)"
+					echo "$showexecute Reloading PM2 instance for PORT=$pm2dropboxport..."
+					cd .. && pm2 reload $pm2dropboxport
+					sleep 1
+
+					if [[ $getpm2dropboxstatus == online ]]; then
+						echo "$showok PM2 Instance is ${GREEN}online$STAND!"
+					elif [[ $getpm2dropboxstatus == errored ]]; then
+						echo "$showerror PM2 Instance failed to start!"
+						echo "$showinfo Check LOG."
+						pm2 log $pm2dropboxport
+						exit 1
+					fi
+				else
+					echo "$showerror Blockchain Folder was not archived! Unexpected error! Investigate!"
+				fi
 			else
-				echo "$showerror Blockchain Folder was not archived! Unexpected error! Investigate!"
+				if [[ ! -n $getpm2dropboxport ]]; then
+					echo "$showerror Oops...PM2 instance with PORT=$pm2dropboxport does not exist!"
+					echo "$showerror We can't proceed. Maybe the instance didn't start after the last Dropbox Backup."
+					exit 0
+				fi
 			fi
 		else
 			echo "$showerror Oops..Blockchain Folder not found! This wasn't suppose to happen..."
@@ -205,11 +234,17 @@ else #first time configuration
 	read -e -r -p "$showinput Asuming you already have a Dropbox App, enter the Access Token: " OAUTH_ACCESS_TOKEN
 
 	read -e -r -p "$showinfo The access token is $OAUTH_ACCESS_TOKEN. Is this correct? [y/n]: " answer
-	if [[ $answer != "y" ]]; then dropboxbkupupload; fi # start again if the ACCESS_TOKEN is not correct
+	if [[ $answer != "y" ]]; then
 
-	touch .$dropbox_config_file
-	echo "OAUTH_ACCESS_TOKEN=$OAUTH_ACCESS_TOKEN" > .$dropbox_config_file
-	echo "$showok Dropbox configuration has been saved."
+		touch .$dropbox_config_file
+		echo "OAUTH_ACCESS_TOKEN=$OAUTH_ACCESS_TOKEN" > .$dropbox_config_file
+		echo "$showok Dropbox configuration has been saved."
+		dropboxbkupupload
+	else
+		echo "$showerror Please start the script again and enter correct OAUTH_ACCESS_TOKEN."
+
+	fi # start again if the ACCESS_TOKEN is not correct
+
 
 fi # CHECKING FOR AUTH FILE END
 
@@ -233,7 +268,7 @@ if [[ $(stat --format="%s" $LOCAL_FILE_SRC) -lt 157286000  ]]; then
 else
 	if [[ $(stat --format="%s" $LOCAL_FILE_SRC) -gt 157286000  ]]; then
 
-		echo "$showinfo File size is greater than 150M, creating chunks..."
+		echo "$showinfo File size is greater than 150M, [$(stat --format="%s" $LOCAL_FILE_SRC)], creating chunks..."
 
 		if [[ -d $db3chunksfolder ]]; then
 
@@ -268,7 +303,7 @@ else
 		get_total_chunks=$(ls -l $db3chunksfolder | awk 'NR>2{print$9}' | wc -l) # NR>2 because we don't have grep **part pipe and we`re not counting chunkpartA
 		###
 
-		### START_CHUNK_UPLOAD_APPEND # SUPPORT_FOR_1+12_CHUNKS.
+		### START_CHUNK_UPLOAD_APPEND # SUPPORT_FOR_1A+12_CHUNKS.
 		echo "$showinfo We have $GREEN$get_total_chunks$STAND CHUNKS to APPEND..."
 
 		for chunk in $getchunkparts;
@@ -328,7 +363,7 @@ else
 		get_total_chunksoffset=$(stat --format="%s" $db3chunksfolder/* | awk '{sum+=$1} END {print sum}')
 		###
 
-		echo "$showinfo We're now commiting CHUNKs uploaded from SESSION_ID=$RED$getsessionid$STAND..."
+		echo "$showinfo We're now commiting CHUNKs uploaded from SESSION_ID=$GREEN$getsessionid$STAND..."
 
 		### CLOSE_SESSION_ID
 		curl --progress-bar -X POST "$API_CHUNKED_UPLOAD_FINISH_URL" -i --globoff -o "$RESPONSE_FILE_FINISH" \
