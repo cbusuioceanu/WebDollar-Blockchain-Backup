@@ -1,7 +1,7 @@
 # WebDollar-Blockchain-Backup [![Build Status](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup.svg?branch=master)](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup)
 Backup your local Node-WebDollar Blockchain using Dropbox API
 
-#### Link to BlockchainDB3 - press CTRL + click to open in a new window <a href="https://www.dropbox.com/s/la2g6stmrw7ceqb/blockchainDB3.tar.gz?dl=0">Get blockchainDB3 from Dropbox</a>
+#### Link to BlockchainDB3 <a href="https://www.dropbox.com/s/la2g6stmrw7ceqb/blockchainDB3.tar.gz?dl=0">Get blockchainDB3 from Dropbox</a> <- ctrl + click to open in a new window
 ----
 ##### Note: this BACKUP can be used by Miners and Nodes as well.
 ##### Note: this SCRIPT has backup support for Nodes only at the moment.
@@ -11,10 +11,10 @@ Backup your local Node-WebDollar Blockchain using Dropbox API
 #### 3. This script should be used with CRON
 #### ```sudo crontab -e```
 #### Paste: ```0 */12 * * * bash blockcharch.sh```
-#### ^ CRON at every 12 hours ^
+#### ^ CRON every 12 hours ^
 ----
-#### To get a Dropbox Account, visit <a href="https://www.dropbox.com/" target="_blank">Create Dropbox Account</a>
-#### To create a Dropbox App, visit <a href="https://www.dropbox.com/developers" target="_blank">Create a Dropbox App</a>
+#### To get a Dropbox Account, visit <a href="https://www.dropbox.com/" target="_blank">Create Dropbox Account</a> <- ctrl + click to open in a new window
+#### To create a Dropbox App, visit <a href="https://www.dropbox.com/developers" target="_blank">Create a Dropbox App</a> <- ctrl + click to open in a new window
 ----
 <img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img1.jpg" alt="WebDollar Blockchain Backup image 1"/>
 <img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img2.jpg" alt="WebDollar Blockchain Backup image 2"/>
