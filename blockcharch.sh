@@ -2,11 +2,13 @@
 
 # You need a Dropbox account and an API key
 # This script should be used with CRON
-# Before first time run, make sure you input your values for linuxuser= and mainwebdfolder!
+# Before first time run, make sure you input your values for linuxuser=, mainwebdfolder= and pm2dropboxport= !
 # If you have to reset the main webdollar dropbox folder, just remove the .blockchaindbs file located @ /home/$linuxuser/.blockchaindbs
 # sudo crontab -e
-# Paste: 0 */12 * * * bash blkcharch.sh > /home/enter_your_user/blockcharchiver.log
+# Paste: 0 */12 * * * /bin/bash /home/enter_your_user/blockcharch.sh > /home/enter_your_user/blockcharchiver.log
 # ^ CRON at every 12 hours ^
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games # if CRON doesn't run this script correctly, please change the PATH to your system env PATH (run echo $PATH to get it)
 
 #### COLOR SETTINGS ####
 BLACK=$(tput setaf 0 && tput bold)
@@ -46,7 +48,7 @@ abortfm="$CYAN[abort for Menu]$STAND"
 linuxuser="webd1" # change this to your Linux UserName | do not change order!
 mainwebdfolder="Node-WebDollardropbox" # This location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
 pm2dropboxport="888"		       #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
-getpm2dropboxid=$(pm2 list | grep $pm2dropboxport | awk '{print $4}')  #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
+                                       #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
 ###
 
 ### GENERAL_VARS
@@ -54,6 +56,8 @@ fastsearch="/home/$linuxuser/.blockchaindbs"
 db3chunksfolder="/home/$linuxuser/db3chunks"
 response_code_100="^HTTP/1.1 100 CONTINUE"
 response_code_200="^HTTP/1.1 200 OK"
+whichpm2=$(which pm2)
+whichsplit=$(which split)
 ###
 
 function checksingleresponse()
@@ -90,8 +94,9 @@ function blockchainarchivator(){
 	### VARS
 	webdnode=$(cat $fastsearch)
 	getblockchainfolder="$webdnode/blockchainDB3"
-	getpm2dropboxport=$(pm2 list | grep $pm2dropboxport | awk '{print $2}')
-	getpm2dropboxstatus=$(pm2 list | grep $pm2dropboxport | awk '{print $10}')
+	getpm2dropboxport=$($whichpm2 list | grep $pm2dropboxport | awk '{print $2}')
+	getpm2dropboxid=$($whichpm2 list | grep $pm2dropboxport | awk '{print $4}')
+	getpm2dropboxstatus=$($whichpm2 list | grep $pm2dropboxport | awk '{print $10}')
 	#cutport=$(ls -d $getblockchainfolder | cut -d '/' -f5 | cut -d '8' -f1)
 	###
 
@@ -107,7 +112,7 @@ function blockchainarchivator(){
 			echo "$showexecute Stopping PM2 process for ID=$getpm2dropboxid and PORT=$pm2dropboxport"
 
 			if [[ -n $getpm2dropboxport ]]; then
-				pm2 stop $pm2dropboxport
+				$whichpm2 stop $pm2dropboxport
 				sleep 1
 				echo "$showexecute Proceeding with Blockchain Archivation..."
 				cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" *
@@ -115,7 +120,7 @@ function blockchainarchivator(){
 				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
 					echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/blockchainDB3.tar.gz)"
 					echo "$showexecute Reloading PM2 instance for PORT=$pm2dropboxport..."
-					cd .. && pm2 reload $pm2dropboxport
+					cd .. && $whichpm2 reload $pm2dropboxport
 					sleep 1
 
 					if [[ $getpm2dropboxstatus == online ]]; then
@@ -123,7 +128,7 @@ function blockchainarchivator(){
 					elif [[ $getpm2dropboxstatus == errored ]]; then
 						echo "$showerror PM2 Instance failed to start!"
 						echo "$showinfo Check LOG."
-						pm2 log $pm2dropboxport
+						$whichpm2 log $pm2dropboxport
 						exit 1
 					fi
 				else
@@ -272,14 +277,14 @@ else
 
 		if [[ -d $db3chunksfolder ]]; then
 
-			split -b 100M $LOCAL_FILE_SRC "$db3chunksfolder/blockchainDB3.part"
+			$whichsplit -b 100M $LOCAL_FILE_SRC "$db3chunksfolder/blockchainDB3.part"
 			sleep 2;
 		else
 			if [[ ! -d $db3chunksfolder ]]; then
 
 				echo "$showerror Oops...DB3 Chunks folder not found!"
 				echo "$showinfo Creating one @ $db3chunksfolder" && mkdir $db3chunksfolder
-				split -b 100M $LOCAL_FILE_SRC "$db3chunksfolder/blockchainDB3.part"
+				$whichsplit -b 100M $LOCAL_FILE_SRC "$db3chunksfolder/blockchainDB3.part"
 				sleep 2;
 			fi
 		fi
