@@ -1,7 +1,9 @@
 # WebDollar-Blockchain-Backup [![Build Status](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup.svg?branch=master)](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup)
 Backup your local Node-WebDollar Blockchain using Dropbox API
 
-#### Link to BlockchainDB3 <a href="https://www.dropbox.com/s/la2g6stmrw7ceqb/blockchainDB3.tar.gz?dl=0">Get blockchainDB3 from Dropbox</a> <- ctrl + click to open in a new window
+#### Links with latest BlockchainDB3 <-> ctrl + click to open links in a new window
+#### <a href="https://www.dropbox.com/s/la2g6stmrw7ceqb/blockchainDB3.tar.gz?dl=0">Get blockchainDB3 from Dropbox</a>
+#### <a href="https://webdftp.webdollarvpn.io/ftp/blockchainDB3.tar.gz">Get blockchainDB3 from WebDollarVPN.io Mirror</a> -> you can also use wget or curl to download from this link
 ----
 ##### Note: this BACKUP can be used by Miners and Nodes as well.
 ##### Note: this SCRIPT has backup support for Nodes only at the moment.
