@@ -5,8 +5,8 @@
 # Before first time run, make sure you input your values for linuxuser=, mainwebdfolder= and pm2dropboxport= !
 # If you have to reset the main webdollar dropbox folder, just remove the .blockchaindbs file located @ /home/$linuxuser/.blockchaindbs
 # sudo crontab -e
-# Paste: 0 */12 * * * /bin/bash /home/enter_your_user/blockcharch.sh > /home/enter_your_user/blockcharchiver.log
-# ^ CRON at every 12 hours ^
+# Paste: 0 */6 * * * /bin/bash /home/enter_your_user/blockcharch.sh > /home/enter_your_user/blockcharchiver.log
+# ^ CRON at every 6 hours ^
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games # if CRON doesn't run this script correctly, please change the PATH to your system env PATH (run echo $PATH to get it)
 
@@ -52,6 +52,13 @@ pm2dropboxport="888"		       #^ You should make a separate Dropbox webdollar-nod
 ###
 
 ### GENERAL_VARS
+DEBUG="1" # change this to 1 if debugging is needed
+dropbox_config_file="/.dropbox_uploader"
+ftp_config_file="/.ftp_uploader"
+TMP_DIR="/tmp"
+LOCAL_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.tar.gz"
+SHA_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.sha1"
+DROPBOX_DST="/blockchainDB3.tar.gz" # must start with /
 fastsearch="/home/$linuxuser/.blockchaindbs"
 db3chunksfolder="/home/$linuxuser/db3chunks"
 response_code_100="^HTTP/1.1 100 CONTINUE"
@@ -60,6 +67,65 @@ whichpm2=$(which pm2)
 whichsplit=$(which split)
 ###
 
+# CHECKING FOR DROPBOX_AUTH FILE
+if [[ -e $dropbox_config_file ]]; then
+
+	# Check if config file has the OAUTH_ACCESS_TOKEN
+	if [[ ! $(grep OAUTH_ACCESS_TOKEN $dropbox_config_file) == "OAUTH_ACCESS_TOKEN" ]]; then
+        	echo "$showok Dropbox OAUTH_ACCESS_TOKEN found @ $dropbox_config_file..."
+	fi
+
+else # first time configuration for dropbox uploader
+
+	echo -e "\n$showexecute Dropbox Upload first time configuration...\n"
+
+	read -e -r -p "$showinput Asuming you already have a Dropbox App, enter the Access Token: " OAUTH_ACCESS_TOKEN
+
+	read -e -r -p "$showinfo The access token is $OAUTH_ACCESS_TOKEN. Is this correct? [y/n]: " answer
+	if [[ $answer == "y" ]]; then
+
+		touch $dropbox_config_file
+		echo "OAUTH_ACCESS_TOKEN=$OAUTH_ACCESS_TOKEN" > $dropbox_config_file
+		echo "$showok Dropbox configuration has been saved."
+	else
+		echo "$showerror Please start the script again and enter correct OAUTH_ACCESS_TOKEN."
+		exit 1
+
+	fi # start again if the ACCESS_TOKEN is not correct
+
+
+fi # CHECKING FOR DROPBOX_AUTH FILE END
+
+# CHECKING FOR FTP CONFIG FILE START
+if [[ -e $ftp_config_file ]]; then
+
+        # Check if ftp config file has the correct data
+        if [[ ! $(grep FTP_HOST $ftp_config_file) == "FTP_HOST" ]]; then
+                echo -e "$showok FTP UPLOADER config found @ $ftp_config_file...\n"
+        fi
+
+else # first time configuration for ftp uploader
+
+        echo -e "\\n$showexecute FTP Uploader first time configuration...\\n$showinfo Asuming you already have a FTP Account..."
+
+        read -e -r -p "$showinput enter FTP_HOST (e.g. domain.tld): " FTP_HOST
+        read -e -r -p "$showinput enter FTP_USERNAME(e.g. user@subdomain.domain.tld): " FTP_USERNAME
+        read -e -r -p "$showinput enter FTP_PASSWORD: " FTP_PASSWORD
+
+        read -e -r -p "$showinfo FTP UPLOADER config: HOST=$FTP_HOST | USER=$FTP_USERNAME | PASS=$FTP_PASSWORD -> Are these correct? [y/n]: " answer
+        if [[ $answer == "y" ]]; then
+
+                touch $ftp_config_file
+                echo -e "FTP_HOST=$FTP_HOST\\nFTP_USERNAME=$FTP_USERNAME\\nFTP_PASSWORD=$FTP_PASSWORD" > $ftp_config_file
+                echo "$showok FTP UPLOADER configuration has been saved."
+        else
+                echo "$showerror Please start the script to enter FTP config info again."
+                exit 1
+
+        fi # start again if the ACCESS_TOKEN is not correct
+fi # CHECKING FOR FTP CONFIG FILE END
+
+### check single file response START
 function checksingleresponse()
 {
 	# Check Response from Dropbox
@@ -88,6 +154,26 @@ function checksingleresponse()
 		fi
 	fi
 }
+### check single file response END
+
+### FTP_UPLOADER FUNCTION START
+function ftp_uploader(){
+### VARS
+get_FTP_HOST=$(grep "FTP_HOST" $ftp_config_file | cut -d "=" -f2)
+get_FTP_USER=$(grep "FTP_USER" $ftp_config_file | cut -d "=" -f2)
+get_FTP_PASSWORD=$(grep "FTP_PASSWORD" $ftp_config_file | cut -d "=" -f2)
+###
+
+sha1sum $LOCAL_FILE_SRC | awk '{print $1}' > $SHA_FILE_SRC
+
+lftp -d -u $get_FTP_USER,$get_FTP_PASSWORD $get_FTP_HOST << EOT
+put $LOCAL_FILE_SRC -o blockchainDB3.tar.gz
+put $SHA_FILE_SRC -o blockchainDB3.sha1
+bye
+EOT
+
+}
+### FTP_UPLOADER FUNCTION END
 
 ### START BLOCKCHAIN_ARHIVATOR
 function blockchainarchivator(){
@@ -113,7 +199,7 @@ function blockchainarchivator(){
 
 			if [[ -n $getpm2dropboxport ]]; then
 				$whichpm2 stop $pm2dropboxport
-				sleep 1
+				sleep 2
 				echo "$showexecute Proceeding with Blockchain Archivation..."
 				cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" *
 
@@ -169,14 +255,7 @@ fi
 
 
 ### DROPBOX UPLOADER FUNCTION
-function dropboxbkupupload(){
-### VARS
-dropbox_config_file="/.dropbox_uploader"
-TMP_DIR="/tmp"
-DEBUG="1" # change this to 1 if debugging is needed
-LOCAL_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.tar.gz"
-DROPBOX_DST="/blockchainDB3.tar.gz" # must start with /
-###
+function dropbox_uploader(){
 
 # DO NOT EDIT BELOW #
 API_MIGRATE_V2="https://api.dropboxapi.com/1/oauth2/token_from_oauth1"
@@ -224,35 +303,6 @@ fi
 }
 ### REMOVE TEMP FILES FUNCTION END
 
-#CHECKING FOR AUTH FILE
-if [[ -e $dropbox_config_file ]]; then
-
-	# Check if config file has the OAUTH_ACCESS_TOKEN
-	if [[ ! $(grep OAUTH_ACCESS_TOKEN $dropbox_config_file) == "OAUTH_ACCESS_TOKEN" ]]; then
-        	echo -e "$showok Dropbox OAUTH_ACCESS_TOKEN found @ $dropbox_config_file...\n"
-	fi
-
-else #first time configuration
-
-	echo -e "\n$showexecute Dropbox Upload first time configuration...\n"
-
-	read -e -r -p "$showinput Asuming you already have a Dropbox App, enter the Access Token: " OAUTH_ACCESS_TOKEN
-
-	read -e -r -p "$showinfo The access token is $OAUTH_ACCESS_TOKEN. Is this correct? [y/n]: " answer
-	if [[ $answer != "y" ]]; then
-
-		touch .$dropbox_config_file
-		echo "OAUTH_ACCESS_TOKEN=$OAUTH_ACCESS_TOKEN" > .$dropbox_config_file
-		echo "$showok Dropbox configuration has been saved."
-		dropboxbkupupload
-	else
-		echo "$showerror Please start the script again and enter correct OAUTH_ACCESS_TOKEN."
-
-	fi # start again if the ACCESS_TOKEN is not correct
-
-
-fi # CHECKING FOR AUTH FILE END
-
 # DROPBOX UPLOAD FILE FUNCTION
 function upload_file(){
 ### VARS
@@ -273,7 +323,7 @@ if [[ $(stat --format="%s" $LOCAL_FILE_SRC) -lt 157286000  ]]; then
 else
 	if [[ $(stat --format="%s" $LOCAL_FILE_SRC) -gt 157286000  ]]; then
 
-		echo "$showinfo File size is greater than 150M, [$(stat --format="%s" $LOCAL_FILE_SRC)], creating chunks..."
+		echo "$showinfo File size is greater than 150M, [$(du -h $LOCAL_FILE_SRC)], creating chunks..."
 
 		if [[ -d $db3chunksfolder ]]; then
 
@@ -393,9 +443,9 @@ else
 fi
 
 } # DROPBOX UPLOAD FILE FUNCTION END
-upload_file
+upload_file # call upload file to dropbox
 
-}
-### DROPBOX UPLOADER FUNCTION
+} # DROPBOX UPLOADER BIG FUNCTION
 
-dropboxbkupupload
+dropbox_uploader 	# call dropbox big function
+ftp_uploader		# call ftp_uploader function
