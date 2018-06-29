@@ -54,7 +54,8 @@ pm2dropboxport="888"		       #^ You should make a separate Dropbox webdollar-nod
 ### GENERAL_VARS
 DEBUG="1" # change this to 1 if debugging is needed
 dropbox_config_file="/.dropbox_uploader"
-ftp_config_file="/.ftp_uploader"
+ftp_config_file_server1="/.ftp_uploader1"
+ftp_config_file_server2="/.ftp_uploader2"
 TMP_DIR="/tmp"
 LOCAL_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.tar.gz"
 SHA_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.sha1"
@@ -97,11 +98,11 @@ else # first time configuration for dropbox uploader
 fi # CHECKING FOR DROPBOX_AUTH FILE END
 
 # CHECKING FOR FTP CONFIG FILE START
-if [[ -e $ftp_config_file ]]; then
+if [[ -e $ftp_config_file_server1 ]]; then
 
         # Check if ftp config file has the correct data
-        if [[ ! $(grep FTP_HOST $ftp_config_file) == "FTP_HOST" ]]; then
-                echo -e "$showok FTP UPLOADER config found @ $ftp_config_file...\n"
+        if [[ ! $(grep FTP_HOST $ftp_config_file_server1) == "FTP_HOST" ]]; then
+                echo -e "$showok FTP UPLOADER config found @ $ftp_config_file_server1...\n"
         fi
 
 else # first time configuration for ftp uploader
@@ -115,8 +116,8 @@ else # first time configuration for ftp uploader
         read -e -r -p "$showinfo FTP UPLOADER config: HOST=$FTP_HOST | USER=$FTP_USERNAME | PASS=$FTP_PASSWORD -> Are these correct? [y/n]: " answer
         if [[ $answer == "y" ]]; then
 
-                touch $ftp_config_file
-                echo -e "FTP_HOST=$FTP_HOST\\nFTP_USERNAME=$FTP_USERNAME\\nFTP_PASSWORD=$FTP_PASSWORD" > $ftp_config_file
+                touch $ftp_config_file_server1
+                echo -e "FTP_HOST=$FTP_HOST\\nFTP_USERNAME=$FTP_USERNAME\\nFTP_PASSWORD=$FTP_PASSWORD" > $ftp_config_file_server1
                 echo "$showok FTP UPLOADER configuration has been saved."
         else
                 echo "$showerror Please start the script to enter FTP config info again."
@@ -158,19 +159,23 @@ function checksingleresponse()
 
 ### FTP_UPLOADER FUNCTION START
 function ftp_uploader(){
-### VARS
-get_FTP_HOST=$(grep "FTP_HOST" $ftp_config_file | cut -d "=" -f2)
-get_FTP_USER=$(grep "FTP_USER" $ftp_config_file | cut -d "=" -f2)
-get_FTP_PASSWORD=$(grep "FTP_PASSWORD" $ftp_config_file | cut -d "=" -f2)
-###
 
 sha1sum $LOCAL_FILE_SRC | awk '{print $1}' > $SHA_FILE_SRC
+
+for ftpupload in $ftp_config_file_server1 $ftp_config_file_server2;
+do
+
+        get_FTP_HOST=$(grep "FTP_HOST" $ftpupload | cut -d "=" -f2)
+        get_FTP_USER=$(grep "FTP_USER" $ftpupload | cut -d "=" -f2)
+        get_FTP_PASSWORD=$(grep "FTP_PASSWORD" $ftpupload | cut -d "=" -f2)
 
 lftp -d -u $get_FTP_USER,$get_FTP_PASSWORD $get_FTP_HOST << EOT
 put $LOCAL_FILE_SRC -o blockchainDB3.tar.gz
 put $SHA_FILE_SRC -o blockchainDB3.sha1
 bye
 EOT
+
+done
 
 }
 ### FTP_UPLOADER FUNCTION END
