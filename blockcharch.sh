@@ -11,51 +11,51 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games # if CRON doesn't run this script correctly, please change the PATH to your system env PATH (run echo $PATH to get it)
 
 #### COLOR SETTINGS ####
-BLACK=$(tput setaf 0 && tput bold)
-RED=$(tput setaf 1 && tput bold)
-GREEN=$(tput setaf 2 && tput bold)
-YELLOW=$(tput setaf 3 && tput bold)
-BLUE=$(tput setaf 4 && tput bold)
-MAGENTA=$(tput setaf 5 && tput bold)
-CYAN=$(tput setaf 6 && tput bold)
-WHITE=$(tput setaf 7 && tput bold)
-BLACKbg=$(tput setab 0 && tput bold)
-REDbg=$(tput setab 1 && tput bold)
-GREENbg=$(tput setab 2 && tput bold)
-YELLOWbg=$(tput setab 3 && tput bold)
-BLUEbg=$(tput setab 4 && tput dim)
-MAGENTAbg=$(tput setab 5 && tput bold)
-CYANbg=$(tput setab 6 && tput bold)
-WHITEbg=$(tput setab 7 && tput bold)
-STAND=$(tput sgr0)
+black=$(tput setaf 0 && tput bold)
+red=$(tput setaf 1 && tput bold)
+green=$(tput setaf 2 && tput bold)
+yellow=$(tput setaf 3 && tput bold)
+blue=$(tput setaf 4 && tput bold)
+magenta=$(tput setaf 5 && tput bold)
+cyan=$(tput setaf 6 && tput bold)
+white=$(tput setaf 7 && tput bold)
+blackbg=$(tput setab 0 && tput bold)
+redbg=$(tput setab 1 && tput bold)
+greenbg=$(tput setab 2 && tput bold)
+yellowbg=$(tput setab 3 && tput bold)
+bluebg=$(tput setab 4 && tput dim)
+magentabg=$(tput setab 5 && tput bold)
+cyanbg=$(tput setab 6 && tput bold)
+whitebg=$(tput setab 7 && tput bold)
+stand=$(tput sgr0)
 ###
 
 ### System dialog VARS
-showinfo="$GREEN[info]$STAND"
-showerror="$RED[error]$STAND"
-showexecute="$YELLOW[running]$STAND"
-showok="$MAGENTA[OK]$STAND"
-showdone="$BLUE[DONE]$STAND"
-showinput="$CYAN[input]$STAND"
-showwarning="$RED[warning]$STAND"
-showremove="$GREEN[removing]$STAND"
-shownone="$MAGENTA[none]$STAND"
-redhashtag="$REDbg$WHITE#$STAND"
-abortfm="$CYAN[abort for Menu]$STAND"
+showinfo="$green[info]$stand"
+showerror="$red[error]$stand"
+showexecute="$yellow[running]$stand"
+showok="$magenta[OK]$stand"
+showdone="$blue[DONE]$stand"
+showinput="$cyan[input]$stand"
+showwarning="$red[warning]$stand"
+showremove="$green[removing]$stand"
+shownone="$magenta[none]$stand"
+redhashtag="$redbg$white#$stand"
+abortfm="$cyan[abort for Menu]$stand"
 ###
 
 ### CHANGE_THESE_VALUES_TO_YOURS
 linuxuser="webd1" # change this to your Linux UserName | do not change order!
-mainwebdfolder="Node-WebDollardropbox" # This location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
-pm2dropboxport="888"		       #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
+mainwebdfolder="Webddropbox" # This location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
+pm2dropboxport="8888"		       #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
                                        #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
 ###
 
 ### GENERAL_VARS
 DEBUG="1" # change this to 1 if debugging is needed
-dropbox_config_file="/.dropbox_uploader"
-ftp_config_file_server1="/.ftp_uploader1"
-ftp_config_file_server2="/.ftp_uploader2"
+dropbox_config_file="/home/$linuxuser/.dropbox_uploader"
+ftp_config_file_server1="/home/$linuxuser/.ftp_uploader1"
+ftp_config_file_server2="/home/$linuxuser/.ftp_uploader2"
 TMP_DIR="/tmp"
 LOCAL_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.tar.gz"
 SHA_FILE_SRC="/home/$linuxuser/$mainwebdfolder/blockchainDB3.sha1"
@@ -72,7 +72,7 @@ whichsplit=$(which split)
 if [[ -e $dropbox_config_file ]]; then
 
 	# Check if config file has the OAUTH_ACCESS_TOKEN
-	if [[ ! $(grep OAUTH_ACCESS_TOKEN $dropbox_config_file) == "OAUTH_ACCESS_TOKEN" ]]; then
+	if [[ ! $(grep "OAUTH_ACCESS_TOKEN" $dropbox_config_file) == "OAUTH_ACCESS_TOKEN" ]]; then
         	echo "$showok Dropbox OAUTH_ACCESS_TOKEN found @ $dropbox_config_file..."
 	fi
 
@@ -101,7 +101,7 @@ fi # CHECKING FOR DROPBOX_AUTH FILE END
 if [[ -e $ftp_config_file_server1 ]]; then
 
         # Check if ftp config file has the correct data
-        if [[ ! $(grep FTP_HOST $ftp_config_file_server1) == "FTP_HOST" ]]; then
+        if [[ ! $(grep "FTP_HOST" $ftp_config_file_server1) == "FTP_HOST" ]]; then
                 echo -e "$showok FTP UPLOADER config found @ $ftp_config_file_server1...\n"
         fi
 
@@ -169,12 +169,13 @@ do
         get_FTP_USER=$(grep "FTP_USER" $ftpupload | cut -d "=" -f2)
         get_FTP_PASSWORD=$(grep "FTP_PASSWORD" $ftpupload | cut -d "=" -f2)
 
-lftp -d -u $get_FTP_USER,$get_FTP_PASSWORD $get_FTP_HOST << EOT
-put $LOCAL_FILE_SRC -o blockchainDB3.tar.gz
+lftp -d -u "$get_FTP_USER","$get_FTP_PASSWORD" "$get_FTP_HOST" << EOT
+put $LOCAL_FILE_SRC -o "blockchainDB3.tar.gz"
 put $SHA_FILE_SRC -o blockchainDB3.sha1
 bye
 EOT
 
+sleep 2
 done
 
 }
@@ -194,11 +195,11 @@ function blockchainarchivator(){
 	if [[ -s $fastsearch ]]; then
 
 		echo "$showinfo Fast Search available! Proceeding..."
-		echo "$showexecute Changing directory to: $webdnode" && cd $webdnode && echo "$showinfo Directory changed to $(pwd)"
+		echo "$showexecute Changing directory to: $webdnode" && if cd "$webdnode"; then echo "$showinfo Current DIR has been changed to $yellow$(pwd)$stand"; else echo "$showerror Couldn't change DIR to $getblockchainfolder!"; fi
 
-		if [[ -d $getblockchainfolder ]]; then
+		if [[ -d "$getblockchainfolder" ]]; then
 			echo "$showok Blockchain Folder $getblockchainfolder found!"
-			echo "$showinfo Blockchain Folder has size = $(du -h $getblockchainfolder)"
+			echo "$showinfo Blockchain Folder has size = $(du -h "$getblockchainfolder")"
 			echo "$showinfo We must STOP pm2 process in order to start Blockchain Archivation and Backup!"
 			echo "$showexecute Stopping PM2 process for ID=$getpm2dropboxid and PORT=$pm2dropboxport"
 
@@ -206,16 +207,18 @@ function blockchainarchivator(){
 				$whichpm2 stop $pm2dropboxport
 				sleep 2
 				echo "$showexecute Proceeding with Blockchain Archivation..."
-				cd $getblockchainfolder && tar -czvf "$webdnode/blockchainDB3.tar.gz" *
+				if cd "$getblockchainfolder"; then echo "$showinfo Current DIR has been changed to $yellow$(pwd)$stand"; else echo "$showerror Couldn't change DIR to $getblockchainfolder!"; fi
+				tar -czvf "$webdnode/blockchainDB3.tar.gz" *
+				sleep 2
 
 				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
-					echo "$showok Blockchain Folder Archived successfully! Size = $(du -h $webdnode/blockchainDB3.tar.gz)"
+					echo "$showok Blockchain Folder Archived successfully! Size = $(du -h "$webdnode"/blockchainDB3.tar.gz)"
 					echo "$showexecute Reloading PM2 instance for PORT=$pm2dropboxport..."
 					cd .. && $whichpm2 reload $pm2dropboxport
 					sleep 1
 
 					if [[ $getpm2dropboxstatus == online ]]; then
-						echo "$showok PM2 Instance is ${GREEN}online$STAND!"
+						echo "$showok PM2 Instance is ${green}online$stand!"
 					elif [[ $getpm2dropboxstatus == errored ]]; then
 						echo "$showerror PM2 Instance failed to start!"
 						echo "$showinfo Check LOG."
@@ -247,7 +250,7 @@ if [[ ! -s $fastsearch ]]; then
 
 	echo "$showerror Fast Search (cache): No Fast Search file found!!"
 	echo "$showexecute Creating one now..."
-	touch $fastsearch && echo "$(find / -name $mainwebdfolder)" > $fastsearch
+	touch $fastsearch && sudo find / -name $mainwebdfolder | tee $fastsearch
 	echo "$showinfo Contents of Fast Search = $(cat $fastsearch)"
 	blockchainarchivator
 else
@@ -345,9 +348,9 @@ else
 		fi
 
 		### START_UPLOAD_CHUNK_A (to get a session id, then append)
-		getchunkpartA=$(ls -l $db3chunksfolder | grep **part | awk 'NR==1{print$9}')
+		getchunkpartA=$(ls -l $db3chunksfolder | grep ".*part" | awk 'NR==1{print$9}')
 
-		echo "$showinfo Uploading CHUNK_A = $GREEN$getchunkpartA$STAND"
+		echo "$showinfo Uploading CHUNK_A = $green$getchunkpartA$stand"
 
 		curl --progress-bar -X POST "$API_CHUNKED_UPLOAD_START_URL" -i --globoff -o "${CHUNK_FILE}_$getchunkpartA" \
 		 --header "Authorization: Bearer $get_OAUTH_ACCESS_TOKEN" \
@@ -357,38 +360,38 @@ else
 		### END_UPLOAD_CHUNK_A (to get a session id, then append)
 
 		### VARS
-		getchunkparts=$(ls -l $db3chunksfolder | grep **part | awk 'NR>1{print$9}')
-		get_chunk_offsets=$(ls -l $db3chunksfolder | grep **part | awk 'NR>1{print$5}')
-		getsessionid=$(sed -n 's/{"session_id": *"*\([^"]*\)"*.*/\1/p' ${CHUNK_FILE}_$getchunkpartA)
+		getchunkparts=$(ls -l $db3chunksfolder | grep ".*part" | awk 'NR>1{print$9}')
+		get_chunk_offsets=$(ls -l $db3chunksfolder | grep ".*part" | awk 'NR>1{print$5}')
+		getsessionid=$(sed -n 's/{"session_id": *"*\([^"]*\)"*.*/\1/p' ${CHUNK_FILE}_"$getchunkpartA")
 		get_total_chunks=$(ls -l $db3chunksfolder | awk 'NR>2{print$9}' | wc -l) # NR>2 because we don't have grep **part pipe and we`re not counting chunkpartA
 		###
 
 		### START_CHUNK_UPLOAD_APPEND # SUPPORT_FOR_1A+12_CHUNKS.
-		echo "$showinfo We have $GREEN$get_total_chunks$STAND CHUNKS to APPEND..."
+		echo "$showinfo We have $green$get_total_chunks$stand CHUNKS to APPEND..."
 
 		for chunk in $getchunkparts;
 		do
-			chunkstat=$(stat --format="%s" $db3chunksfolder/$chunk)
+			chunkstat=$(stat --format=%s $db3chunksfolder/"$chunk")
 			statcmd="stat --format="%s" "
 
 			for CUR_OFFSET in $chunkstat;
 			do
 				INIT_OFFSET="104857600"
-				mathcheck=$(if [[ $chunk == **ab ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$CUR_OFFSET"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "$CUR_OFFSET"; fi fi \
-				elif [[ $chunk == **ac ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "2*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ad ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "3*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ae ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "4*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **af ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "5*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ag ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "6*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ah ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "7*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ai ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "8*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **aj ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "9*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **ak ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "10*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **al ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)+$($statcmd$db3chunksfolder/**ak)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "11*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi \
-				elif [[ $chunk == **am ]]; then if [[ $CUR_OFFSET -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)+$($statcmd$db3chunksfolder/**ak)+$($statcmd$db3chunksfolder/**al)"; else if [[ $CUR_OFFSET == 104857600 ]]; then echo "12*$CUR_OFFSET"; else if [[ $CUR_OFFSET == "" ]]; then echo "0"; fi fi fi fi)
+				mathcheck=$(if [[ "$chunk" == **ab ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "$CUR_OFFSET"; fi \
+				elif [[ "$chunk" == **ac ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "2*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ad ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "3*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ae ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "4*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **af ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "5*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ag ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "6*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ah ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "7*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ai ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "8*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **aj ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "9*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **ak ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "10*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **al ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)+$($statcmd$db3chunksfolder/**ak)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "11*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi \
+				elif [[ "$chunk" == **am ]]; then if [[ "$CUR_OFFSET" -lt 104857600 ]]; then echo "$($statcmd$db3chunksfolder/**aa)+$($statcmd$db3chunksfolder/**ab)+$($statcmd$db3chunksfolder/**ac)+$($statcmd$db3chunksfolder/**ad)+$($statcmd$db3chunksfolder/**ae)+$($statcmd$db3chunksfolder/**af)+$($statcmd$db3chunksfolder/**ag)+$($statcmd$db3chunksfolder/**ah)+$($statcmd$db3chunksfolder/**ai)+$($statcmd$db3chunksfolder/**aj)+$($statcmd$db3chunksfolder/**ak)+$($statcmd$db3chunksfolder/**al)"; elif [[ "$CUR_OFFSET" == 104857600 ]]; then echo "12*$CUR_OFFSET"; elif [[ "$CUR_OFFSET" == "" ]]; then echo "0"; fi fi)
 				SET_OFFSET=$(echo "$mathcheck" | bc)
 
-				echo "$showinfo Uploading CHUNK = $GREEN$chunk$STAND"
+				echo "$showinfo Uploading CHUNK = $green$chunk$stand"
 
 				curl --progress-bar -X POST "$API_CHUNKED_UPLOAD_APPEND_URL" -i --globoff -o "${CHUNK_FILE}_append_$chunk" \
 				 --header "Authorization: Bearer $get_OAUTH_ACCESS_TOKEN" \
@@ -396,16 +399,16 @@ else
 				 --header "Content-Type: application/octet-stream" \
 				 --data-binary @"$db3chunksfolder/$chunk"
 
-				echo "$showinfo Checking if CHUNK = $GREEN$chunk$STAND uploaded successfully..."
+				echo "$showinfo Checking if CHUNK = $green$chunk$stand uploaded successfully..."
 
-				if [[ $(grep "$response_code_100" "${CHUNK_FILE}_append_$chunk") ]]; then
+				if grep -q "$response_code_100" "${CHUNK_FILE}_append_$chunk"; then
 
-					echo "$showinfo $response_code_100 for CHUNK = $GREEN$chunk$STAND"
+					echo "$showinfo $response_code_100 for CHUNK = $green$chunk$stand"
 
-				elif [[ $(grep "$response_code_200" "${CHUNK_FILE}_append_$chunk") ]]; then
+				elif grep -q "$response_code_200" "${CHUNK_FILE}_append_$chunk"; then
 
-					echo -e "$showok $response_code_200 for CHUNK = $GREEN$chunk$STAND"
-					echo -e "$showok CHUNK = $GREEN$chunk$STAND uploaded!"
+					echo -e "$showok $response_code_200 for CHUNK = $green$chunk$stand"
+					echo -e "$showok CHUNK = $green$chunk$stand uploaded!"
 					echo -e "$showinfo Printing debugging info...\\n" && cat "${CHUNK_FILE}_append_$chunk"
 				else
 					echo -e "$showerror Something went wrong! Check LOG...\\n" && cat "${CHUNK_FILE}_append_$chunk"
@@ -423,7 +426,7 @@ else
 		get_total_chunksoffset=$(stat --format="%s" $db3chunksfolder/* | awk '{sum+=$1} END {print sum}')
 		###
 
-		echo "$showinfo We're now commiting CHUNKs uploaded from SESSION_ID=$GREEN$getsessionid$STAND..."
+		echo "$showinfo We're now commiting CHUNKs uploaded from SESSION_ID=$green$getsessionid$stand..."
 
 		### CLOSE_SESSION_ID
 		curl --progress-bar -X POST "$API_CHUNKED_UPLOAD_FINISH_URL" -i --globoff -o "$RESPONSE_FILE_FINISH" \
@@ -437,7 +440,7 @@ else
 
 		echo "$showinfo Checking if process ended successfully..."
 
-		if [[ $(grep "$response_code_200" "$RESPONSE_FILE_FINISH") ]]; then
+		if grep -q "$response_code_200" "$RESPONSE_FILE_FINISH"; then
        			echo -e "$showok Operation ended successfully!"
       			echo -e "$showok File commited!"
 			echo -e "$showinfo Printing debugging info..." && cat "$RESPONSE_FILE_FINISH"
