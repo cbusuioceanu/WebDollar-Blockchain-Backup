@@ -47,8 +47,8 @@ abortfm="$cyan[abort for Menu]$stand"
 ### CHANGE_THESE_VALUES_TO_YOURS
 linuxuser="webd1" # change this to your Linux UserName | do not change order!
 mainwebdfolder="Webddropbox" # This location should have blockchainDB3 - do not use a location with blockchainDB380 or blockchainDB3PORT etc - backed up blockchain won't be compatible with other instances
-pm2dropboxport="8888"		       #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
-                                       #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
+pm2dropboxport="8888"	     #^ You should make a separate Dropbox webdollar-node because when using the cron service to start this script, the process of pm2 must be stopped and restarted after backup
+screendropboxport="8888"     #^ Do not use a production WebDollar-Full-Node for this. Uptime is important!
 ###
 
 ### GENERAL_VARS
@@ -65,6 +65,7 @@ db3chunksfolder="/home/$linuxuser/db3chunks"
 response_code_100="^HTTP/1.1 100 CONTINUE"
 response_code_200="^HTTP/1.1 200 OK"
 whichpm2=$(which pm2)
+whichscreen=$(which screen)
 whichsplit=$(which split)
 ###
 
@@ -186,9 +187,11 @@ function blockchainarchivator(){
 	### VARS
 	webdnode=$(cat $fastsearch)
 	getblockchainfolder="$webdnode/blockchainDB3"
-	getpm2dropboxport=$($whichpm2 list | grep $pm2dropboxport | awk '{print $2}')
-	getpm2dropboxid=$($whichpm2 list | grep $pm2dropboxport | awk '{print $4}')
-	getpm2dropboxstatus=$($whichpm2 list | grep $pm2dropboxport | awk '{print $10}')
+	get_pm2_dropbox_port=$($whichpm2 list | grep $pm2dropboxport | awk '{print $2}')
+	get_pm2_dropbox_id=$($whichpm2 list | grep $pm2dropboxport | awk '{print $4}')
+	get_pm2_dropbox_status=$($whichpm2 list | grep $pm2dropboxport | awk '{print $10}')
+	get_screen_dropbox_port=$($whichscreen -ls | grep $pm2dropboxport | awk '{print $1}' | cut -d '.' -f2)
+	get_screen_host=$($whichscreen -ls | grep $pm2dropboxport | awk '{print $1}')
 	#cutport=$(ls -d $getblockchainfolder | cut -d '/' -f5 | cut -d '8' -f1)
 	###
 
@@ -199,11 +202,12 @@ function blockchainarchivator(){
 
 		if [[ -d "$getblockchainfolder" ]]; then
 			echo "$showok Blockchain Folder $getblockchainfolder found!"
-			echo "$showinfo Blockchain Folder has size = $(du -h "$getblockchainfolder")"
+			echo "$showinfo Blockchain Folder has size = ${yellow}$(du -h "$getblockchainfolder")$stand"
 			echo "$showinfo We must STOP pm2 process in order to start Blockchain Archivation and Backup!"
-			echo "$showexecute Stopping PM2 process for ID=$getpm2dropboxid and PORT=$pm2dropboxport"
+			echo "$showexecute Stopping PM2 process for ID=$get_pm2_dropbox_id and PORT=$pm2dropboxport"
 
-			if [[ -n $getpm2dropboxport ]]; then
+			### PM2_DETECT_START
+			if [[ -n $get_pm2_dropbox_port ]]; then
 				$whichpm2 stop $pm2dropboxport
 				sleep 2
 				echo "$showexecute Proceeding with Blockchain Archivation..."
@@ -212,14 +216,14 @@ function blockchainarchivator(){
 				sleep 2
 
 				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
-					echo "$showok Blockchain Folder Archived successfully! Size = $(du -h "$webdnode"/blockchainDB3.tar.gz)"
+					echo "$showok Blockchain Folder Archived successfully! Size = ${yellow}$(du -h "$webdnode"/blockchainDB3.tar.gz)$stand"
 					echo "$showexecute Reloading PM2 instance for PORT=$pm2dropboxport..."
 					cd .. && $whichpm2 reload $pm2dropboxport
 					sleep 1
 
-					if [[ $getpm2dropboxstatus == online ]]; then
+					if [[ $get_pm2_dropbox_status == online ]]; then
 						echo "$showok PM2 Instance is ${green}online$stand!"
-					elif [[ $getpm2dropboxstatus == errored ]]; then
+					elif [[ $get_pm2_dropbox_status == errored ]]; then
 						echo "$showerror PM2 Instance failed to start!"
 						echo "$showinfo Check LOG."
 						$whichpm2 log $pm2dropboxport
@@ -229,12 +233,49 @@ function blockchainarchivator(){
 					echo "$showerror Blockchain Folder was not archived! Unexpected error! Investigate!"
 				fi
 			else
-				if [[ ! -n $getpm2dropboxport ]]; then
+				if [[ ! -n $get_pm2_dropbox_port ]]; then
 					echo "$showerror Oops...PM2 instance with PORT=$pm2dropboxport does not exist!"
-					echo "$showerror We can't proceed. Maybe the instance didn't start after the last Dropbox Backup."
+				fi
+			fi
+			### PM2_DETECT_END
+
+			### SCREEN_DETECT_START
+			if [[ -n $get_screen_dropbox_port ]]; then
+				echo "$showexecute Stopping WebDollar Dropbox Node SCREEN..." && $whichscreen -S $screendropboxport -p 0 -X stuff ^C
+				sleep 2;
+				echo "$showexecute Proceeding with Blockchain Archivation..."
+				if cd "$getblockchainfolder"; then echo "$showinfo Current DIR has been changed to $yellow$(pwd)$stand"; else echo "$showerror Couldn't change DIR to $getblockchainfolder!"; fi
+				#tar -czvf "$webdnode/blockchainDB3.tar.gz" *
+				sleep 2;
+
+				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
+					echo "$showok Blockchain Folder Archived successfully! Size = ${yellow}$(du -h "$webdnode"/blockchainDB3.tar.gz)$stand"
+					echo "$showexecute Reloading SCREEN instance for PORT=$screendropboxport..."
+					if cd ..; then echo "$showinfo Current DIR has been changed to $yellow$(pwd)$stand"; else echo "$showerror Couldn't change DIR back!"; fi
+					echo "$showexecute Starting WebDollar Dropbox Node SCREEN..." && $whichscreen -S $screendropboxport -p 0 -X stuff "SERVER_PORT=$screendropboxport npm run start^M"
+					echo "$showinfo WebDollar Dropbox Node should start..." && sleep 8 && $whichscreen -x $screendropboxport -X hardcopy /tmp/webddropbox && cat /tmp/webddropbox | grep "Fast Blockchain Loading" | tail -n 1
+
+					if [[ -n $get_screen_host ]]; then
+						echo "$showok SCREEN Instance is ${green}$($whichscreen -ls | grep $screendropboxport)$stand!"
+					elif [[ ! -n $get_screen_host ]]; then
+						echo "$showerror SCREEN Instance not found!"
+						echo "$showinfo Check LOG."
+						$whichscreen -ls | grep $screendropboxport
+						exit 1
+					fi
+				else
+					echo "$showerror Blockchain Folder was not archived! Unexpected error! Investigate!"
+				fi
+			else
+				if [[ ! -n $get_screen_dropbox_port ]]; then
+					echo "$showerror Oops...SCREEN instance with PORT=$screendropboxport does not exist!"
+					echo "$showerror We can't proceed. Maybe instance didn't start after the last Dropbox Backup. Investigate!"
 					exit 0
 				fi
 			fi
+			### SCREEN_DETECT_END
+
+
 		else
 			echo "$showerror Oops..Blockchain Folder not found! This wasn't suppose to happen..."
 		fi
@@ -256,7 +297,6 @@ if [[ ! -s $fastsearch ]]; then
 else
 	echo "$showok Fast Search file found!!"
 	echo "$showexecute Proceeding with the archivation process..."
-
 	blockchainarchivator
 fi
 ### END ARCHIVE_CREATION
@@ -401,11 +441,11 @@ else
 
 				echo "$showinfo Checking if CHUNK = $green$chunk$stand uploaded successfully..."
 
-				if grep -q "$response_code_100" "${CHUNK_FILE}_append_$chunk"; then
+				if grep "$response_code_100" "${CHUNK_FILE}_append_$chunk"; then
 
 					echo "$showinfo $response_code_100 for CHUNK = $green$chunk$stand"
 
-				elif grep -q "$response_code_200" "${CHUNK_FILE}_append_$chunk"; then
+				elif grep "$response_code_200" "${CHUNK_FILE}_append_$chunk"; then
 
 					echo -e "$showok $response_code_200 for CHUNK = $green$chunk$stand"
 					echo -e "$showok CHUNK = $green$chunk$stand uploaded!"
@@ -440,7 +480,7 @@ else
 
 		echo "$showinfo Checking if process ended successfully..."
 
-		if grep -q "$response_code_200" "$RESPONSE_FILE_FINISH"; then
+		if grep "$response_code_200" "$RESPONSE_FILE_FINISH"; then
        			echo -e "$showok Operation ended successfully!"
       			echo -e "$showok File commited!"
 			echo -e "$showinfo Printing debugging info..." && cat "$RESPONSE_FILE_FINISH"
