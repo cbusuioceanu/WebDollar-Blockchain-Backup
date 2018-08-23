@@ -245,7 +245,7 @@ function blockchainarchivator(){
 				sleep 2;
 				echo "$showexecute Proceeding with Blockchain Archivation..."
 				if cd "$getblockchainfolder"; then echo "$showinfo Current DIR has been changed to $yellow$(pwd)$stand"; else echo "$showerror Couldn't change DIR to $getblockchainfolder!"; fi
-				#tar -czvf "$webdnode/blockchainDB3.tar.gz" *
+				tar -czvf "$webdnode/blockchainDB3.tar.gz" *
 				sleep 2;
 
 				if [[ -s "$webdnode/blockchainDB3.tar.gz" ]]; then
