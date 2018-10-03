@@ -1,4 +1,4 @@
-# WebDollar-Blockchain-Backup [![Build Status](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup.svg?branch=master)](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup)
+# WebDollar Blockchain Backup [![Build Status](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup.svg?branch=master)](https://travis-ci.org/cbusuioceanu/WebDollar-Blockchain-Backup)
 Backup your local Node-WebDollar Blockchain using Dropbox API
 
 #### Links with latest BlockchainDB3 <-> ctrl + click to open links in a new window
