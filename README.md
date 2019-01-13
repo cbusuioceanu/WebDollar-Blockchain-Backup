@@ -19,6 +19,6 @@ Backup your local Node-WebDollar Blockchain using Dropbox API
 #### To get a Dropbox Account, visit <a href="https://www.dropbox.com/" target="_blank">Create Dropbox Account</a> <- ctrl + click to open in a new window
 #### To create a Dropbox App, visit <a href="https://www.dropbox.com/developers" target="_blank">Create a Dropbox App</a> <- ctrl + click to open in a new window
 ----
-<img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img1.jpg" alt="WebDollar Blockchain Backup image 1"/>
-<img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img2.jpg" alt="WebDollar Blockchain Backup image 2"/>
-<img src="https://webdollarvpn.io/img/webdollar-blockchain-backup-img3.jpg" alt="WebDollar Blockchain Backup image 3"/>
+<img src="https://www.vpnromania.ro/webd/webdollar-blockchain-backup-img1.jpg" alt="WebDollar Blockchain Backup image 1"/>
+<img src="https://www.vpnromania.ro/webd/webdollar-blockchain-backup-img2.jpg" alt="WebDollar Blockchain Backup image 2"/>
+<img src="https://www.vpnromania.ro/webd/webdollar-blockchain-backup-img3.jpg" alt="WebDollar Blockchain Backup image 3"/>
